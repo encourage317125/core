@@ -276,7 +276,7 @@ defineExpose({ foo: 123 })
     // should generate correct setup signature
     expect(content).toMatch(`setup(__props, { expose: __expose }) {`)
     // should replace callee
-    expect(content).toMatch(/\bexpose\(\{ foo: 123 \}\)/)
+    expect(content).toMatch(/\b__expose\(\{ foo: 123 \}\)/)
   })
 
   test('<script> after <script setup> the script content not end with `\\n`', () => {
@@ -1378,6 +1378,29 @@ const emit = defineEmits(['a', 'b'])
       )
     })
 
+    test('withDefaults (reference)', () => {
+      const { content } = compile(`
+      <script setup lang="ts">
+      import { defaults } from './foo'
+      const props = withDefaults(defineProps<{
+        foo?: string
+        bar?: number
+        baz: boolean
+      }>(), defaults)
+      </script>
+      `)
+      assertCode(content)
+      expect(content).toMatch(`import { mergeDefaults as _mergeDefaults`)
+      expect(content).toMatch(
+        `
+  _mergeDefaults({
+    foo: { type: String, required: false },
+    bar: { type: Number, required: false },
+    baz: { type: Boolean, required: true }
+  }, defaults)`.trim()
+      )
+    })
+
     // #7111
     test('withDefaults (dynamic) w/ production mode', () => {
       const { content } = compile(
@@ -1407,6 +1430,28 @@ const emit = defineEmits(['a', 'b'])
       )
     })
 
+    test('withDefaults w/ dynamic object method', () => {
+      const { content } = compile(`
+      <script setup lang="ts">
+      const props = withDefaults(defineProps<{
+        foo?: () => 'string'
+      }>(), {
+        ['fo' + 'o']() { return 'foo' }
+      })
+      </script>
+      `)
+      assertCode(content)
+      expect(content).toMatch(`import { mergeDefaults as _mergeDefaults`)
+      expect(content).toMatch(
+        `
+  _mergeDefaults({
+    foo: { type: Function, required: false }
+  }, {
+        ['fo' + 'o']() { return 'foo' }
+      })`.trim()
+      )
+    })
+
     test('defineEmits w/ type', () => {
       const { content } = compile(`
       <script setup lang="ts">
@@ -1414,7 +1459,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ((e: 'foo' | 'bar') => void),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1437,7 +1481,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: (${type}),`)
       expect(content).toMatch(`emits: ["foo", "bar", "baz"]`)
     })
 
@@ -1449,7 +1492,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ({ (e: 'foo' | 'bar'): void }),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1461,7 +1503,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ({ (e: 'foo' | 'bar'): void }),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1475,7 +1516,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ({ (e: 'foo' | 'bar'): void }),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1487,7 +1527,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ({ (e: 'foo' | 'bar'): void }),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1499,7 +1538,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ({ (e: 'foo' | 'bar'): void }),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1511,7 +1549,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ((e: 'foo' | 'bar') => void),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1523,7 +1560,6 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`emit: ((e: 'foo' | 'bar') => void),`)
       expect(content).toMatch(`emits: ["foo", "bar"]`)
     })
 
@@ -1536,8 +1572,17 @@ const emit = defineEmits(['a', 'b'])
       </script>
       `)
       assertCode(content)
-      expect(content).toMatch(`setup(__props, { expose: __expose, emit }) {`)
       expect(content).toMatch(`emits: ['foo']`)
+    })
+
+    test('defineEmits w/ type (property syntax)', () => {
+      const { content } = compile(`
+      <script setup lang="ts">
+      const emit = defineEmits<{ foo: [], bar: [] }>()
+      </script>
+      `)
+      expect(content).toMatch(`emits: ["foo", "bar"]`)
+      assertCode(content)
     })
 
     test('runtime Enum', () => {
@@ -1871,6 +1916,19 @@ const emit = defineEmits(['a', 'b'])
         </script>`).content
       )
     })
+
+    test('mixed usage of property / call signature in defineEmits', () => {
+      expect(() =>
+        compile(`<script setup lang="ts">
+        defineEmits<{
+          foo: []
+          (e: 'hi'): void
+        }>()
+        </script>`)
+      ).toThrow(
+        `defineEmits() type cannot mixed call signature and property syntax.`
+      )
+    })
   })
 })
 
@@ -2188,5 +2246,124 @@ describe('SFC analyze <script> bindings', () => {
       expect(content).toMatch(`name: 'Baz'`)
       assertCode(content)
     })
+  })
+})
+
+describe('SFC genDefaultAs', () => {
+  test('normal <script> only', () => {
+    const { content } = compile(
+      `<script>
+      export default {}
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(`const _sfc_ = {}`)
+    assertCode(content)
+  })
+
+  test('normal <script> w/ cssVars', () => {
+    const { content } = compile(
+      `<script>
+      export default {}
+      </script>
+      <style>
+      .foo { color: v-bind(x) }
+      </style>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).not.toMatch('__default__')
+    expect(content).toMatch(`const _sfc_ = {}`)
+    assertCode(content)
+  })
+
+  test('<script> + <script setup>', () => {
+    const { content } = compile(
+      `<script>
+      export default {}
+      </script>
+      <script setup>
+      const a = 1
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(
+      `const _sfc_ = /*#__PURE__*/Object.assign(__default__`
+    )
+    assertCode(content)
+  })
+
+  test('<script> + <script setup>', () => {
+    const { content } = compile(
+      `<script>
+      export default {}
+      </script>
+      <script setup>
+      const a = 1
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(
+      `const _sfc_ = /*#__PURE__*/Object.assign(__default__`
+    )
+    assertCode(content)
+  })
+
+  test('<script setup> only', () => {
+    const { content } = compile(
+      `<script setup>
+      const a = 1
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(`const _sfc_ = {\n  setup`)
+    assertCode(content)
+  })
+
+  test('<script setup> only w/ ts', () => {
+    const { content } = compile(
+      `<script setup lang="ts">
+      const a = 1
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(`const _sfc_ = /*#__PURE__*/_defineComponent(`)
+    assertCode(content)
+  })
+
+  test('<script> + <script setup> w/ ts', () => {
+    const { content } = compile(
+      `<script lang="ts">
+      export default {}
+      </script>
+      <script setup lang="ts">
+      const a = 1
+      </script>`,
+      {
+        genDefaultAs: '_sfc_'
+      }
+    )
+    expect(content).not.toMatch('export default')
+    expect(content).toMatch(
+      `const _sfc_ = /*#__PURE__*/_defineComponent({\n  ...__default__`
+    )
+    assertCode(content)
   })
 })
