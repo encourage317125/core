@@ -28,6 +28,9 @@ export {
   isStaticProperty
 } from '@vue/compiler-core'
 
+// Internals for type resolution
+export { invalidateTypeCache, registerTS } from './script/resolveType'
+
 // Types
 export type {
   SFCParseOptions,
