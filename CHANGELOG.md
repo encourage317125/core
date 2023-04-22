@@ -1,3 +1,37 @@
+# [3.3.0-beta.1](https://github.com/vuejs/core/compare/v3.3.0-alpha.13...v3.3.0-beta.1) (2023-04-21)
+
+
+### Features
+
+* allow accessing console in template ([#6508](https://github.com/vuejs/core/issues/6508)) ([fe76224](https://github.com/vuejs/core/commit/fe762247f8035d28d543bc5602ad01b0c258f6d6)), closes [#7939](https://github.com/vuejs/core/issues/7939)
+* **compiler-sfc:** improve utility type Partial and Required ([#8103](https://github.com/vuejs/core/issues/8103)) ([1d1d728](https://github.com/vuejs/core/commit/1d1d72894995fde14bd09e2990462c19d5176bf9))
+* **deprecation:** deprecate [@vnode](https://github.com/vnode) hooks in favor of vue: prefix ([5f0394a](https://github.com/vuejs/core/commit/5f0394a5ab88c82c74e240161499721f63d5462e))
+* **deprecation:** deprecate v-is directive ([bbd8301](https://github.com/vuejs/core/commit/bbd8301a1344b02de635ea16d4822db1c343bd12))
+* **deprecation:** unwrap injected refs in Options API by default, deprecate app.config.unwrapInjectedRefs ([526fa3b](https://github.com/vuejs/core/commit/526fa3b2ccf038375e76f8af2f1ddf79a7388878))
+* **suspense:** introduce suspensible option for `<Suspense>` ([#6736](https://github.com/vuejs/core/issues/6736)) ([cb37d0b](https://github.com/vuejs/core/commit/cb37d0b9ffb5d4bb81a0367d84295dec8dd4448c)), closes [#5513](https://github.com/vuejs/core/issues/5513)
+
+
+
+# [3.3.0-alpha.13](https://github.com/vuejs/core/compare/v3.3.0-alpha.12...v3.3.0-alpha.13) (2023-04-20)
+
+
+### Bug Fixes
+
+* **compiler-sfc:** handle type merging + fix namespace access when inferring type ([d53e157](https://github.com/vuejs/core/commit/d53e157805678db7a3b9ca2fccc74530e1dfbc48)), closes [#8102](https://github.com/vuejs/core/issues/8102)
+* **compiler-sfc:** normalize filename when invalidating cache ([9b5a34b](https://github.com/vuejs/core/commit/9b5a34bf8c0d1b4c6ec3cf1434076b7e25065f84))
+* **hmr:** always traverse static children in dev ([f17a82c](https://github.com/vuejs/core/commit/f17a82c769cfb60ee6785ef5d34d91191d153542)), closes [#7921](https://github.com/vuejs/core/issues/7921) [#8100](https://github.com/vuejs/core/issues/8100)
+* **hmr:** force update cached slots during HMR ([94fa67a](https://github.com/vuejs/core/commit/94fa67a4f73b3646c8c1e29512a71b17bd56efc3)), closes [#7155](https://github.com/vuejs/core/issues/7155) [#7158](https://github.com/vuejs/core/issues/7158)
+
+
+### Features
+
+* **compiler-sfc:** support dynamic imports when resolving types ([4496456](https://github.com/vuejs/core/commit/4496456d7d9947560ef1e35ccb176b97a27bd8f4))
+* **compiler-sfc:** support export * when resolving types ([7c3ca3c](https://github.com/vuejs/core/commit/7c3ca3cc3e122fe273e80a950c57d492a7f0bf4a))
+* **compiler-sfc:** support ExtractPropTypes when resolving types ([50c0bbe](https://github.com/vuejs/core/commit/50c0bbe5221dbc1dc353d4960e69ec7c8ba12905)), closes [#8104](https://github.com/vuejs/core/issues/8104)
+* hasInjectionContext() for libraries ([#8111](https://github.com/vuejs/core/issues/8111)) ([5510ce3](https://github.com/vuejs/core/commit/5510ce385abfa151c07a5253cccf4abccabdd01d))
+
+
+
 # [3.3.0-alpha.12](https://github.com/vuejs/core/compare/v3.3.0-alpha.11...v3.3.0-alpha.12) (2023-04-18)
 
 
